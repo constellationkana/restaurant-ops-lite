@@ -19,6 +19,13 @@ type ShiftNote = {
   timestamp: string
 }
 
+type ActivityLogEntry = {
+  id: number
+  timestamp: string
+  actionType: "Task Completed" | "Task Uncompleted" | "Note Added"
+  description: string
+}
+
 const initialTasks: Task[] = [
   {
     id: 1,
@@ -84,6 +91,8 @@ const initialNotes: ShiftNote[] = [
     timestamp: "12:45 PM",
   },
 ]
+
+const initialActivityLog: ActivityLogEntry[] = []
 
 function StatCard({
   value,
@@ -192,6 +201,11 @@ export default function App() {
   const [newNoteText, setNewNoteText] = useState("")
   const [newNoteType, setNewNoteType] = useState<NoteType>("General")
   const [nextNoteId, setNextNoteId] = useState(4)
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>(() => {
+    const saved = localStorage.getItem("restaurant-activity-log")
+    return saved ? JSON.parse(saved) : initialActivityLog
+  })
+  const [nextActivityLogId, setNextActivityLogId] = useState(1)
 
   const completedTasks = tasks.filter((task) => task.completed).length
   const totalTasks = tasks.length
@@ -208,6 +222,11 @@ export default function App() {
     localStorage.setItem("restaurant-notes", JSON.stringify(notes))
   }, [notes])
 
+  // Save activity log to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("restaurant-activity-log", JSON.stringify(activityLog))
+  }, [activityLog])
+
   function formatTime(): string {
     const now = new Date()
     let hours = now.getHours()
@@ -217,6 +236,20 @@ export default function App() {
     hours = hours ? hours : 12
     const minutesStr = minutes < 10 ? "0" + minutes : minutes
     return `${hours}:${minutesStr} ${ampm}`
+  }
+
+  function addActivityLog(
+    actionType: "Task Completed" | "Task Uncompleted" | "Note Added",
+    description: string
+  ) {
+    const newEntry: ActivityLogEntry = {
+      id: nextActivityLogId,
+      timestamp: formatTime(),
+      actionType,
+      description,
+    }
+    setActivityLog([newEntry, ...activityLog])
+    setNextActivityLogId(nextActivityLogId + 1)
   }
 
   function handleAddNote() {
@@ -232,17 +265,28 @@ export default function App() {
     }
 
     setNotes([newNote, ...notes])
+    addActivityLog("Note Added", `${newNoteType} - ${newNoteText.substring(0, 50)}${newNoteText.length > 50 ? "..." : ""}`)
     setNewNoteText("")
     setNewNoteType("General")
     setNextNoteId(nextNoteId + 1)
   }
 
   function toggleTask(id: number) {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
+    setTasks((currentTasks) => {
+      const updatedTasks = currentTasks.map((task) =>
         task.id === id ? { ...task, completed: !task.completed } : task
       )
-    )
+      
+      // Add activity log entry
+      const task = currentTasks.find((t) => t.id === id)
+      if (task) {
+        const wasCompleted = task.completed
+        const actionType = wasCompleted ? "Task Uncompleted" : "Task Completed"
+        addActivityLog(actionType, task.title)
+      }
+      
+      return updatedTasks
+    })
   }
 
   return (
@@ -498,6 +542,45 @@ export default function App() {
                     ? `${incompleteTasks.length} task(s) still need attention before close.`
                     : "All tracked tasks are complete for the current shift."}
                 </p>
+              </div>
+
+              <div className="mt-6">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">
+                  Activity Log
+                </h3>
+
+                {activityLog.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                    <p className="text-sm text-slate-500">No activities yet. Tasks and notes will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {activityLog.map((entry) => {
+                      const actionColors: Record<string, string> = {
+                        "Task Completed": "bg-emerald-100 text-emerald-700",
+                        "Task Uncompleted": "bg-slate-100 text-slate-600",
+                        "Note Added": "bg-blue-100 text-blue-700",
+                      }
+
+                      return (
+                        <div
+                          key={entry.id}
+                          className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span
+                              className={`inline-block flex-shrink-0 rounded-full px-2 py-1 text-xs font-bold ${actionColors[entry.actionType]}`}
+                            >
+                              {entry.actionType}
+                            </span>
+                            <span className="text-xs text-slate-400">{entry.timestamp}</span>
+                          </div>
+                          <p className="mt-2 text-sm text-slate-700">{entry.description}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </section>
           )}
