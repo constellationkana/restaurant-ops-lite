@@ -10,6 +10,15 @@ type Task = {
   completed: boolean
 }
 
+type NoteType = "General" | "Inventory" | "Customer Issue" | "Staff" | "Cleaning"
+
+type ShiftNote = {
+  id: number
+  text: string
+  type: NoteType
+  timestamp: string
+}
+
 const initialTasks: Task[] = [
   {
     id: 1,
@@ -55,10 +64,25 @@ const stockItems = [
   { name: "Takeout bags", amount: "Good", detail: "No action needed" },
 ]
 
-const notes = [
-  "Customer reported missing sauce on delivery order.",
-  "Rice prep ran behind during lunch rush.",
-  "Need extra takeout containers before weekend.",
+const initialNotes: ShiftNote[] = [
+  {
+    id: 1,
+    text: "Customer reported missing sauce on delivery order.",
+    type: "Customer Issue",
+    timestamp: "2:30 PM",
+  },
+  {
+    id: 2,
+    text: "Rice prep ran behind during lunch rush.",
+    type: "Staff",
+    timestamp: "1:15 PM",
+  },
+  {
+    id: 3,
+    text: "Need extra takeout containers before weekend.",
+    type: "Inventory",
+    timestamp: "12:45 PM",
+  },
 ]
 
 function StatCard({
@@ -158,11 +182,44 @@ function BottomNav({
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("Home")
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
+  const [notes, setNotes] = useState<ShiftNote[]>(initialNotes)
+  const [newNoteText, setNewNoteText] = useState("")
+  const [newNoteType, setNewNoteType] = useState<NoteType>("General")
+  const [nextNoteId, setNextNoteId] = useState(4)
 
   const completedTasks = tasks.filter((task) => task.completed).length
   const totalTasks = tasks.length
   const taskPercent = Math.round((completedTasks / totalTasks) * 100)
   const incompleteTasks = tasks.filter((task) => !task.completed)
+
+  function formatTime(): string {
+    const now = new Date()
+    let hours = now.getHours()
+    const minutes = now.getMinutes()
+    const ampm = hours >= 12 ? "PM" : "AM"
+    hours = hours % 12
+    hours = hours ? hours : 12
+    const minutesStr = minutes < 10 ? "0" + minutes : minutes
+    return `${hours}:${minutesStr} ${ampm}`
+  }
+
+  function handleAddNote() {
+    if (newNoteText.trim() === "") {
+      return
+    }
+
+    const newNote: ShiftNote = {
+      id: nextNoteId,
+      text: newNoteText,
+      type: newNoteType,
+      timestamp: formatTime(),
+    }
+
+    setNotes([newNote, ...notes])
+    setNewNoteText("")
+    setNewNoteType("General")
+    setNextNoteId(nextNoteId + 1)
+  }
 
   function toggleTask(id: number) {
     setTasks((currentTasks) =>
@@ -332,17 +389,74 @@ export default function App() {
 
           {currentPage === "Notes" && (
             <section>
-              <h2 className="mb-3 text-lg font-bold">Shift Notes</h2>
+              <h2 className="mb-4 text-lg font-bold">Shift Notes</h2>
+
+              <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="mb-3">
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Note Type
+                  </label>
+                  <select
+                    value={newNoteType}
+                    onChange={(e) => setNewNoteType(e.target.value as NoteType)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                  >
+                    <option value="General">General</option>
+                    <option value="Inventory">Inventory</option>
+                    <option value="Customer Issue">Customer Issue</option>
+                    <option value="Staff">Staff</option>
+                    <option value="Cleaning">Cleaning</option>
+                  </select>
+                </div>
+
+                <div className="mb-3">
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Note
+                  </label>
+                  <textarea
+                    value={newNoteText}
+                    onChange={(e) => setNewNoteText(e.target.value)}
+                    placeholder="Write your shift note here..."
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                    rows={3}
+                  />
+                </div>
+
+                <button
+                  onClick={handleAddNote}
+                  className="w-full rounded-lg bg-orange-500 px-4 py-2 font-semibold text-white transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300"
+                >
+                  Add Note
+                </button>
+              </div>
 
               <div className="space-y-3">
-                {notes.map((note) => (
-                  <div
-                    key={note}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm"
-                  >
-                    {note}
-                  </div>
-                ))}
+                {notes.map((note) => {
+                  const typeColors: Record<NoteType, string> = {
+                    General: "bg-blue-100 text-blue-700",
+                    Inventory: "bg-yellow-100 text-yellow-700",
+                    "Customer Issue": "bg-red-100 text-red-700",
+                    Staff: "bg-purple-100 text-purple-700",
+                    Cleaning: "bg-green-100 text-green-700",
+                  }
+
+                  return (
+                    <div
+                      key={note.id}
+                      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                    >
+                      <div className="mb-2 flex items-center justify-between">
+                        <span
+                          className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${typeColors[note.type]}`}
+                        >
+                          {note.type}
+                        </span>
+                        <span className="text-xs text-slate-400">{note.timestamp}</span>
+                      </div>
+                      <p className="text-sm text-slate-700">{note.text}</p>
+                    </div>
+                  )
+                })}
               </div>
             </section>
           )}
