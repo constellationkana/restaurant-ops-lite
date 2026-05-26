@@ -64,11 +64,20 @@ const initialTasks: Task[] = [
   },
 ]
 
-const stockItems = [
-  { name: "Cooked chicken", amount: "Low", detail: "Below dinner par level" },
-  { name: "White sauce", amount: "Medium", detail: "Enough for current shift" },
-  { name: "Rice trays", amount: "Low", detail: "Prep needed before rush" },
-  { name: "Takeout bags", amount: "Good", detail: "No action needed" },
+type StockAmount = "Good" | "Medium" | "Low"
+
+type StockItem = {
+  id: number
+  name: string
+  amount: StockAmount
+  detail: string
+}
+
+const initialStockItems: StockItem[] = [
+  { id: 1, name: "Cooked chicken", amount: "Low", detail: "Below dinner par level" },
+  { id: 2, name: "White sauce", amount: "Medium", detail: "Enough for current shift" },
+  { id: 3, name: "Rice trays", amount: "Low", detail: "Prep needed before rush" },
+  { id: 4, name: "Takeout bags", amount: "Good", detail: "No action needed" },
 ]
 
 const initialNotes: ShiftNote[] = [
@@ -206,6 +215,21 @@ export default function App() {
     return saved ? JSON.parse(saved) : initialActivityLog
   })
   const [nextActivityLogId, setNextActivityLogId] = useState(1)
+  const [stockItems, setStockItems] = useState<StockItem[]>(initialStockItems)
+
+  const lowStockCount = stockItems.filter((item) => item.amount === "Low").length
+
+  function cycleStockAmount(amount: StockAmount): StockAmount {
+    return amount === "Good" ? "Medium" : amount === "Medium" ? "Low" : "Good"
+  }
+
+  function handleStockClick(id: number) {
+    setStockItems((current) =>
+      current.map((item) =>
+        item.id === id ? { ...item, amount: cycleStockAmount(item.amount) } : item
+      )
+    )
+  }
 
   const completedTasks = tasks.filter((task) => task.completed).length
   const totalTasks = tasks.length
@@ -307,7 +331,7 @@ export default function App() {
 
           <div className="mt-5 grid grid-cols-3 gap-3">
             <StatCard value={`${taskPercent}%`} label="Tasks Done" />
-            <StatCard value="20" label="Low Stock" />
+            <StatCard value={String(lowStockCount)} label="Low Stock" />
             <StatCard value={String(incompleteTasks.length)} label="Open Issues" />
           </div>
         </header>
@@ -401,9 +425,10 @@ export default function App() {
 
               <div className="space-y-3">
                 {stockItems.map((item) => (
-                  <div
-                    key={item.name}
-                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                  <button
+                    key={item.id}
+                    onClick={() => handleStockClick(item.id)}
+                    className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition hover:bg-orange-50"
                   >
                     <div className="flex items-center justify-between">
                       <p className="font-bold">{item.name}</p>
@@ -420,7 +445,7 @@ export default function App() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-slate-500">{item.detail}</p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </section>
