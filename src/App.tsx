@@ -2,6 +2,8 @@ import { useState, useEffect } from "react"
 
 type Page = "Home" | "Checklist" | "Stock" | "Alerts" | "Notes" | "Manager"
 
+type Role = "Staff" | "Manager"
+
 type Task = {
   id: number
   title: string
@@ -216,6 +218,7 @@ export default function App() {
   })
   const [nextActivityLogId, setNextActivityLogId] = useState(1)
   const [stockItems, setStockItems] = useState<StockItem[]>(initialStockItems)
+  const [currentRole, setCurrentRole] = useState<Role>("Staff")
 
   const lowStockCount = stockItems.filter((item) => item.amount === "Low").length
 
@@ -328,6 +331,26 @@ export default function App() {
           </div>
 
           <p className="mt-6 text-sm text-orange-100">Monday, May 25</p>
+
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-white/10 px-4 py-3 text-sm text-white">
+            <span className="font-semibold">Role: {currentRole}</span>
+            <div className="flex gap-2">
+              {(["Staff", "Manager"] as Role[]).map((role) => (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => setCurrentRole(role)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    currentRole === role
+                      ? "bg-white text-orange-500"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div className="mt-5 grid grid-cols-3 gap-3">
             <StatCard value={`${taskPercent}%`} label="Tasks Done" />
@@ -550,63 +573,74 @@ export default function App() {
             <section>
               <h2 className="mb-3 text-lg font-bold">Manager View</h2>
 
-              <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-                <p className="text-sm text-slate-500">Today’s completion rate</p>
-                <p className="mt-2 text-4xl font-bold text-orange-500">
-                  {taskPercent}%
-                </p>
-                <p className="mt-2 text-sm text-slate-500">
-                  {completedTasks} of {totalTasks} tasks completed.
-                </p>
-              </div>
-
-              <div className="mt-3 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-                <p className="font-bold">Manager Summary</p>
-                <p className="mt-2 text-sm text-slate-500">
-                  {incompleteTasks.length > 0
-                    ? `${incompleteTasks.length} task(s) still need attention before close.`
-                    : "All tracked tasks are complete for the current shift."}
-                </p>
-              </div>
-
-              <div className="mt-6">
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">
-                  Activity Log
-                </h3>
-
-                {activityLog.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-                    <p className="text-sm text-slate-500">No activities yet. Tasks and notes will appear here.</p>
+              {currentRole === "Manager" ? (
+                <>
+                  <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
+                    <p className="text-sm text-slate-500">Today’s completion rate</p>
+                    <p className="mt-2 text-4xl font-bold text-orange-500">
+                      {taskPercent}%
+                    </p>
+                    <p className="mt-2 text-sm text-slate-500">
+                      {completedTasks} of {totalTasks} tasks completed.
+                    </p>
                   </div>
-                ) : (
-                  <div className="space-y-2">
-                    {activityLog.map((entry) => {
-                      const actionColors: Record<string, string> = {
-                        "Task Completed": "bg-emerald-100 text-emerald-700",
-                        "Task Uncompleted": "bg-slate-100 text-slate-600",
-                        "Note Added": "bg-blue-100 text-blue-700",
-                      }
 
-                      return (
-                        <div
-                          key={entry.id}
-                          className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <span
-                              className={`inline-block flex-shrink-0 rounded-full px-2 py-1 text-xs font-bold ${actionColors[entry.actionType]}`}
+                  <div className="mt-3 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
+                    <p className="font-bold">Manager Summary</p>
+                    <p className="mt-2 text-sm text-slate-500">
+                      {incompleteTasks.length > 0
+                        ? `${incompleteTasks.length} task(s) still need attention before close.`
+                        : "All tracked tasks are complete for the current shift."}
+                    </p>
+                  </div>
+
+                  <div className="mt-6">
+                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">
+                      Activity Log
+                    </h3>
+
+                    {activityLog.length === 0 ? (
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+                        <p className="text-sm text-slate-500">No activities yet. Tasks and notes will appear here.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {activityLog.map((entry) => {
+                          const actionColors: Record<string, string> = {
+                            "Task Completed": "bg-emerald-100 text-emerald-700",
+                            "Task Uncompleted": "bg-slate-100 text-slate-600",
+                            "Note Added": "bg-blue-100 text-blue-700",
+                          }
+
+                          return (
+                            <div
+                              key={entry.id}
+                              className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
                             >
-                              {entry.actionType}
-                            </span>
-                            <span className="text-xs text-slate-400">{entry.timestamp}</span>
-                          </div>
-                          <p className="mt-2 text-sm text-slate-700">{entry.description}</p>
-                        </div>
-                      )
-                    })}
+                              <div className="flex items-start justify-between gap-2">
+                                <span
+                                  className={`inline-block flex-shrink-0 rounded-full px-2 py-1 text-xs font-bold ${actionColors[entry.actionType]}`}
+                                >
+                                  {entry.actionType}
+                                </span>
+                                <span className="text-xs text-slate-400">{entry.timestamp}</span>
+                              </div>
+                              <p className="mt-2 text-sm text-slate-700">{entry.description}</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-900">Manager access required.</p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Switch to the Manager role to view this dashboard.
+                  </p>
+                </div>
+              )}
             </section>
           )}
         </div>
