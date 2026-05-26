@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 type Page = "Home" | "Checklist" | "Stock" | "Alerts" | "Notes" | "Manager"
 
@@ -181,8 +181,14 @@ function BottomNav({
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("Home")
-  const [tasks, setTasks] = useState<Task[]>(initialTasks)
-  const [notes, setNotes] = useState<ShiftNote[]>(initialNotes)
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    const saved = localStorage.getItem("restaurant-tasks")
+    return saved ? JSON.parse(saved) : initialTasks
+  })
+  const [notes, setNotes] = useState<ShiftNote[]>(() => {
+    const saved = localStorage.getItem("restaurant-notes")
+    return saved ? JSON.parse(saved) : initialNotes
+  })
   const [newNoteText, setNewNoteText] = useState("")
   const [newNoteType, setNewNoteType] = useState<NoteType>("General")
   const [nextNoteId, setNextNoteId] = useState(4)
@@ -191,6 +197,16 @@ export default function App() {
   const totalTasks = tasks.length
   const taskPercent = Math.round((completedTasks / totalTasks) * 100)
   const incompleteTasks = tasks.filter((task) => !task.completed)
+
+  // Save tasks to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("restaurant-tasks", JSON.stringify(tasks))
+  }, [tasks])
+
+  // Save notes to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("restaurant-notes", JSON.stringify(notes))
+  }, [notes])
 
   function formatTime(): string {
     const now = new Date()
