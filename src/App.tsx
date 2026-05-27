@@ -130,7 +130,7 @@ function TaskRow({
   return (
     <button
       onClick={() => onToggle(task.id)}
-      className={`w-full border-t px-4 py-3 text-left transition ${
+      className={`w-full border-t px-4 py-4 text-left transition ${
         task.completed
           ? "border-emerald-100 bg-emerald-50"
           : "border-red-100 bg-red-50"
@@ -180,12 +180,12 @@ function BottomNav({
   const pages: Page[] = ["Home", "Checklist", "Stock", "Alerts", "Notes", "Manager"]
 
   return (
-    <nav className="fixed bottom-0 left-1/2 grid w-full max-w-md -translate-x-1/2 grid-cols-6 border-t border-slate-200 bg-white text-xs shadow-lg">
+    <nav className="fixed bottom-0 left-1/2 grid w-full max-w-md -translate-x-1/2 grid-cols-6 border-t border-slate-200 bg-white text-sm shadow-lg">
       {pages.map((page) => (
         <button
           key={page}
           onClick={() => onChangePage(page)}
-          className={`py-3 ${
+          className={`min-h-[3.5rem] px-2 py-3 text-sm ${
             currentPage === page
               ? "bg-orange-50 font-bold text-orange-500"
               : "text-slate-500"
@@ -352,14 +352,14 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-3 gap-3">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <StatCard value={`${taskPercent}%`} label="Tasks Done" />
             <StatCard value={String(lowStockCount)} label="Low Stock" />
             <StatCard value={String(incompleteTasks.length)} label="Open Issues" />
           </div>
         </header>
 
-        <div className="space-y-6 px-5 py-5 pb-24">
+        <div className="space-y-6 px-5 py-5 pb-32">
           {currentPage === "Home" && (
             <>
               <button
@@ -406,7 +406,7 @@ export default function App() {
                   Business Impact
                 </h2>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
                     <p className="text-2xl font-bold">$1,240</p>
                     <p className="mt-1 text-sm font-semibold">Estimated Savings</p>
@@ -446,7 +446,7 @@ export default function App() {
             <section>
               <h2 className="mb-3 text-lg font-bold">Stock</h2>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {stockItems.map((item) => (
                   <button
                     key={item.id}
@@ -538,7 +538,7 @@ export default function App() {
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {notes.map((note) => {
                   const typeColors: Record<NoteType, string> = {
                     General: "bg-blue-100 text-blue-700",
